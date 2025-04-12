@@ -7,7 +7,4 @@ description = "Rust language constructs for representing an application in the v
 [dependencies]
 lib_voxels_application_proc = {git = "https://github.com/Oxyn4/lib-voxels-application-proc"}
 lib-voxels-application-core = {git = "https://github.com/Oxyn4/lib-voxels-application-core"}
-serde = {version = "1.0.219", features = ["derive"]}
-toml = { version="0.8.20" }
-url = {version = "2.5.4", features =["serde"]}
 mockall = "0.13.1"
