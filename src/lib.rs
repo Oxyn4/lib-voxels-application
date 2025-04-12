@@ -1,1 +1,2 @@
-pub mod application;
+use lib_voxels_application_proc;
+use lib_voxels_application_core;
