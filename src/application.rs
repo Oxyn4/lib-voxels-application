@@ -52,7 +52,6 @@ impl ApplicationRDN {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Application {
-    #[serde(skip)]
     rdn: ApplicationRDN,
     id: uuid::Uuid,
     homepage: Option<url::Url>,
