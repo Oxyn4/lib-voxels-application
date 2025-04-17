@@ -5,6 +5,7 @@ edition = "2024"
 description = "Rust language constructs for representing an application in the voxels game ecosystem"
 
 [dependencies]
-lib_voxels_application_proc = {git = "https://github.com/Oxyn4/lib-voxels-application-proc"}
-lib-voxels-application-core = {git = "https://github.com/Oxyn4/lib-voxels-application-core"}
 mockall = "0.13.1"
+serde = { version = "1.0.219", features = ["derive"] }
+uuid = { version = "1.16.0", features = ["v4"] }
+url = "2.5.4"
