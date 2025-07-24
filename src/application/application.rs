@@ -1,3 +1,5 @@
+use std::time::Duration;
+use dbus_tokio::connection::IOResourceError;
 use super::rdn::{
     ApplicationRDNErrors,
     ApplicationRDN
@@ -32,7 +34,7 @@ pub struct Application {
 }
 
 impl Application {
-    pub fn new(rdn: ApplicationRDN, id: uuid::Uuid, homepage: Option<url::Url>, description: Option<String>, app_type: Option<ApplicationsType>) -> Application {
+    pub fn new(rdn: ApplicationRDN, id: Uuid, homepage: Option<url::Url>, description: Option<String>, app_type: Option<ApplicationsType>) -> Application {
         Application {
             rdn,
             id,
@@ -41,10 +43,35 @@ impl Application {
             app_type
         }
     }
-    
-    pub fn using_dbus() -> Application {
-            
-        todo!()
+
+    pub async fn using_dbus<F>(uuid: Uuid, on_connection_loss: F) -> Result<Application, dbus::Error>
+    where
+        F: FnOnce(IOResourceError) + Send + 'static
+    {
+        let (res, con) = dbus_tokio::connection::new_system_sync()?;
+
+        let _ = tokio::spawn(async {
+            let err = res.await;
+
+            on_connection_loss(err);
+        });
+
+        let proxy = dbus::nonblock::Proxy::new("voxels.applications", "/get", Duration::from_secs(2), con);
+
+        let (rdn,): (String,) = proxy.method_call("voxels.applications", "rdn", (uuid.to_string(),)).await?;
+        let (description,): (String,) = proxy.method_call("voxels.applications", "description", (uuid.to_string(),)).await?;
+        let (homepage,): (String,) = proxy.method_call("voxels.applications", "homepage", (uuid.to_string(),)).await?;
+        let (app_type,): (String,) = proxy.method_call("voxels.applications", "type", (uuid.to_string(),)).await?;
+
+        Ok(
+            Application::new(
+                ApplicationRDN::new(rdn.as_str()).unwrap(),
+                uuid,
+                Some(Url::parse(&homepage).unwrap()),
+                Some(description),
+                None
+            )
+        )
     }
 
     pub fn rdn(&self) -> &ApplicationRDN {
