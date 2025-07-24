@@ -66,12 +66,15 @@ impl Application {
             }
         });
 
-        let proxy = dbus::nonblock::Proxy::new("voxels.applications", "/get", Duration::from_secs(2), con);
+        let proxy = dbus::nonblock::Proxy::new("voxels.applications", "/get", Duration::from_secs(2), con.clone());
 
         let (rdn,): (String,) = proxy.method_call("voxels.applications", "rdn", (uuid.to_string(),)).await?;
         let (description,): (String,) = proxy.method_call("voxels.applications", "description", (uuid.to_string(),)).await?;
         let (homepage,): (String,) = proxy.method_call("voxels.applications", "homepage", (uuid.to_string(),)).await?;
         let (_app_type,): (String,) = proxy.method_call("voxels.applications", "type", (uuid.to_string(),)).await?;
+
+        drop(cancel_token);
+        drop(con);
 
         Ok(
             Application::new(
