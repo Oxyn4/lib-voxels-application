@@ -41,6 +41,11 @@ impl Application {
             app_type
         }
     }
+    
+    pub fn using_dbus() -> Application {
+            
+        todo!()
+    }
 
     pub fn rdn(&self) -> &ApplicationRDN {
         &self.rdn
