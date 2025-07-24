@@ -44,6 +44,7 @@ impl Application {
         }
     }
 
+    #[cfg(feature = "dbus")]
     pub async fn using_dbus<F>(uuid: Uuid, on_connection_loss: F) -> Result<Application, dbus::Error>
     where
         F: FnOnce(IOResourceError) + Send + 'static

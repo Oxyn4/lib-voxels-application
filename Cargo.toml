@@ -10,6 +10,10 @@ serde = { version = "1.0.219", features = ["derive"] }
 uuid = { version = "1.16.0", features = ["v4", "serde"] }
 url = { version = "2.5.4", features = ["serde"] }
 thiserror = "2.0.12"
-dbus = { version = "0.9.7", features = ["futures"] }
-dbus-tokio = "0.7.6"
-tokio = { version = "1.46.1", features = ["full"] }
+dbus = { version = "0.9.7", features = ["futures"], optional = true }
+dbus-tokio = { version = "0.7.6", optional = true }
+tokio = { version = "1.46.1", features = ["full"], optional = true}
+
+[features]
+dbus = ["dep:dbus-tokio", "dep:tokio", "dep:dbus"]
+all = ["dbus"]
