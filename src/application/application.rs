@@ -45,16 +45,25 @@ impl Application {
     }
 
     #[cfg(feature = "dbus")]
-    pub async fn using_dbus<F>(uuid: Uuid, on_connection_loss: F) -> Result<Application, dbus::Error>
+    pub async fn from_dbus<F>(uuid: Uuid, on_connection_loss: F) -> Result<Application, dbus::Error>
     where
         F: FnOnce(IOResourceError) + Send + 'static
     {
         let (res, con) = dbus_tokio::connection::new_system_sync()?;
 
-        let _ = tokio::spawn(async {
-            let err = res.await;
+        let cancel_token = tokio_util::sync::CancellationToken::new();
 
-            on_connection_loss(err);
+        let child_token = cancel_token.child_token();
+
+        let _ = tokio::spawn(async move {
+            tokio::select! {
+                err = res => {
+                    on_connection_loss(err);
+                },
+                _ = child_token.cancelled() => {
+                    return;
+                }
+            }
         });
 
         let proxy = dbus::nonblock::Proxy::new("voxels.applications", "/get", Duration::from_secs(2), con);
@@ -62,7 +71,7 @@ impl Application {
         let (rdn,): (String,) = proxy.method_call("voxels.applications", "rdn", (uuid.to_string(),)).await?;
         let (description,): (String,) = proxy.method_call("voxels.applications", "description", (uuid.to_string(),)).await?;
         let (homepage,): (String,) = proxy.method_call("voxels.applications", "homepage", (uuid.to_string(),)).await?;
-        let (app_type,): (String,) = proxy.method_call("voxels.applications", "type", (uuid.to_string(),)).await?;
+        let (_app_type,): (String,) = proxy.method_call("voxels.applications", "type", (uuid.to_string(),)).await?;
 
         Ok(
             Application::new(

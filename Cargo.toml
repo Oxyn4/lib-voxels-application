@@ -13,7 +13,8 @@ thiserror = "2.0.12"
 dbus = { version = "0.9.7", features = ["futures"], optional = true }
 dbus-tokio = { version = "0.7.6", optional = true }
 tokio = { version = "1.46.1", features = ["full"], optional = true}
+tokio-util = { version = "0.7.15", optional = true }
 
 [features]
-dbus = ["dep:dbus-tokio", "dep:tokio", "dep:dbus"]
+dbus = ["dep:dbus-tokio", "dep:tokio", "dep:dbus", "dep:tokio-util"]
 all = ["dbus"]
