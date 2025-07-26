@@ -2,12 +2,16 @@ use std::marker::PhantomData;
 use std::time::Duration;
 #[cfg(feature = "dbus")]
 use arg::Variant;
+
 #[cfg(feature = "dbus")]
 use dbus::arg::{IterAppend, TypeMismatchError};
+
 #[cfg(feature = "dbus")]
 use dbus::arg::{Append, ArgType, Iter};
+
 #[cfg(feature = "dbus")]
 use dbus::{arg, Signature};
+
 #[cfg(feature = "dbus")]
 use dbus_tokio::connection::IOResourceError;
 
@@ -34,6 +38,9 @@ pub const DBUS_STANDARD_VOXELS_APPLICATIONS_DESCRIPTION_METHOD: &str = "descript
 
 #[cfg(feature = "dbus")]
 pub const DBUS_STANDARD_VOXELS_APPLICATIONS_TYPE_METHOD: &str = "type";
+
+#[cfg(feature = "dbus")]
+pub const DBUS_STANDARD_VOXELS_APPLICATIONS_INTERFACE: &str = "voxels.applications";
 
 #[cfg(feature = "dbus")]
 pub struct Empty {}
