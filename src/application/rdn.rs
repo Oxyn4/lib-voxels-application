@@ -1,7 +1,12 @@
 use std::path::{Path, PathBuf};
+#[cfg(feature = "dbus")]
+use dbus::arg::{Iter, IterAppend, TypeMismatchError};
+use dbus::arg::ArgType;
+use dbus::Signature;
 use serde::{Deserialize, Serialize};
 
 use thiserror::Error;
+use crate::application::application::Application;
 
 #[derive(Debug, Serialize, Deserialize, Error)]
 pub enum ApplicationRDNErrors {
@@ -23,6 +28,47 @@ pub enum ApplicationRDNErrors {
 pub struct ApplicationRDN {
     name: String,
 }
+
+#[cfg(feature = "dbus")]
+impl dbus::arg::Append for ApplicationRDN {
+    fn append(self, iter: &mut IterAppend) where Self: Sized {
+        iter.append_struct(|s| {
+            s.append(&self.name);
+        });
+    }
+
+    fn append_by_ref(&self, iter: &mut IterAppend) {
+        iter.append_struct(|s| {
+            s.append(&self.name);
+        });
+    }
+}
+
+#[cfg(feature = "dbus")]
+impl dbus::arg::Get<'_> for ApplicationRDN {
+    fn get(iter: &mut Iter) -> Option<Self> {
+        let name: String = iter.get()?;
+
+        let result = ApplicationRDN::new(name.as_str());
+
+        if result.is_ok() {
+            Some(result.unwrap())
+        } else {
+            None
+        }
+    }
+}
+
+
+#[cfg(feature = "dbus")]
+impl dbus::arg::Arg for ApplicationRDN {
+    const ARG_TYPE: ArgType = ArgType::Struct;
+
+    fn signature() -> Signature<'static> {
+        Signature::make::<Self>()
+    }
+}
+
 
 impl ApplicationRDN {
     pub fn new(name: &str) -> Result<ApplicationRDN, ApplicationRDNErrors> {

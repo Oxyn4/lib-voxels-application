@@ -1,9 +1,14 @@
+use std::marker::PhantomData;
 use std::time::Duration;
+use arg::Variant;
+#[cfg(feature = "dbus")]
+use dbus::arg::{IterAppend, TypeMismatchError};
+use dbus::arg::{Append, ArgType, Iter};
+use dbus::{arg, Signature};
+#[cfg(feature = "dbus")]
 use dbus_tokio::connection::IOResourceError;
-use super::rdn::{
-    ApplicationRDNErrors,
-    ApplicationRDN
-};
+
+use super::rdn::{ApplicationRDNErrors, ApplicationRDN};
 
 use serde::{Serialize, Deserialize};
 
@@ -11,6 +16,53 @@ use thiserror::Error;
 
 use uuid::Uuid;
 use url::Url;
+
+#[cfg(feature = "dbus")]
+pub const DBUS_STANDARD_VOXELS_APPLICATIONS_GET_PATH: &str = "get";
+
+#[cfg(feature = "dbus")]
+pub const DBUS_STANDARD_VOXELS_APPLICATIONS_RDN_METHOD: &str = "rdn";
+
+#[cfg(feature = "dbus")]
+pub const DBUS_STANDARD_VOXELS_APPLICATIONS_HOMEPAGE_METHOD: &str = "homepage";
+
+#[cfg(feature = "dbus")]
+pub const DBUS_STANDARD_VOXELS_APPLICATIONS_DESCRIPTION_METHOD: &str = "description";
+
+#[cfg(feature = "dbus")]
+pub const DBUS_STANDARD_VOXELS_APPLICATIONS_TYPE_METHOD: &str = "type";
+
+#[cfg(feature = "dbus")]
+pub struct Empty {}
+
+#[cfg(feature = "dbus")]
+impl Append for Empty {
+    fn append(self, iter: &mut IterAppend) where Self: Sized {
+        iter.append(0);
+    }
+
+    fn append_by_ref(&self, iter: &mut IterAppend) {
+        iter.append(0);
+    }
+}
+
+#[cfg(feature = "dbus")]
+impl arg::Get<'_> for Empty {
+    fn get(iter: &mut Iter) -> Option<Self> {
+        let _: u8 = iter.get()?;
+
+        Some(Empty{})
+    }
+}
+
+#[cfg(feature = "dbus")]
+impl arg::Arg for Empty {
+    const ARG_TYPE: ArgType = ArgType::Byte;
+
+    fn signature() -> Signature<'static> {
+        Signature::make::<Self>()
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Error)]
 pub enum ApplicationErrors {
@@ -22,6 +74,56 @@ pub enum ApplicationErrors {
 pub enum ApplicationsType {
     Client,
     Server,
+    Other(String),
+}
+
+#[cfg(feature = "dbus")]
+impl Append for ApplicationsType {
+    fn append(self, iter: &mut IterAppend) where Self: Sized {
+        match self {
+            Self::Client => (iter.append("Client")),
+            Self::Server => iter.append("Server"),
+            Self::Other(name) => iter.append(name),
+        }
+    }
+
+    fn append_by_ref(&self, iter: &mut IterAppend) {
+        match self {
+            Self::Client => (iter.append("Client")),
+            Self::Server => iter.append("Server"),
+            Self::Other(name) => iter.append(name),
+        }
+    }
+}
+
+#[cfg(feature = "dbus")]
+impl arg::Get<'_> for ApplicationsType {
+    fn get(i: &mut Iter) -> Option<Self> {
+        let read= i.read();
+
+        if read.is_err() {
+            return None;
+        }
+
+        let (tag,): (String,) = read.unwrap();
+
+        Some(
+            match tag.as_ref() {
+                "Client" => ApplicationsType::Client,
+                "Server" => ApplicationsType::Server,
+                _ => ApplicationsType::Other(tag),
+            }
+        )
+    }
+}
+
+#[cfg(feature = "dbus")]
+impl arg::Arg for ApplicationsType {
+    const ARG_TYPE: ArgType = ArgType::Variant;
+
+    fn signature() -> Signature<'static> {
+        Signature::make::<Self>()
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -32,6 +134,102 @@ pub struct Application {
     description: Option<String>,
     app_type: Option<ApplicationsType>
 }
+
+#[cfg(feature = "dbus")]
+impl Append for Application {
+    fn append(self, iter: &mut IterAppend) where Self: Sized {
+        iter.append_struct(|s| {
+            s.append(&self.rdn);
+            s.append(self.id.to_string());
+
+            match &self.homepage {
+                Some(u) => {
+                    s.append(Variant(u.to_string()))
+                }
+                None => {
+                    s.append(Variant(Empty{}))
+                }
+            }
+
+            match &self.description {
+                Some(d) => {
+                    s.append(Variant(d.to_string()))
+                }
+                None => {
+                    s.append(Variant(Empty{}))
+                }
+            }
+
+            match &self.app_type {
+                Some(a) => {
+                    s.append(Variant(a))
+                },
+                None => {
+                    s.append(Variant(Empty{}))
+                }
+            }
+        });
+    }
+
+    fn append_by_ref(&self, iter: &mut IterAppend) {
+        iter.append_struct(|s| {
+            s.append(&self.rdn);
+            s.append(self.id.to_string());
+
+            match &self.homepage {
+                Some(u) => {
+                    s.append(Variant(u.to_string()))
+                }
+                None => {
+                    s.append(Variant(Empty{}))
+                }
+            }
+
+            match &self.description {
+                Some(d) => {
+                    s.append(Variant(d.to_string()))
+                }
+                None => {
+                    s.append(Variant(Empty{}))
+                }
+            }
+
+            match &self.app_type {
+                Some(a) => {
+                    s.append(Variant(a))
+                },
+                None => {
+                    s.append(Variant(Empty{}))
+                }
+            }
+        });
+    }
+}
+
+#[cfg(feature = "dbus")]
+impl arg::Arg for Application {
+    const ARG_TYPE: ArgType = ArgType::Struct;
+
+    fn signature() -> Signature<'static> {
+        Signature::make::<Self>()
+    }
+}
+
+#[cfg(feature = "dbus")]
+impl arg::Get<'_> for Application {
+    fn get(i: &mut Iter) -> Option<Self> {
+        let read = i.read();
+
+        if read.is_err() {
+            return None;
+        }
+
+        let (rdn, uuid, homepage, description, app_type): (ApplicationRDN, String, String, String, ApplicationsType) = read.unwrap();
+
+        todo!()
+    }
+}
+
 
 impl Application {
     pub fn new(rdn: ApplicationRDN, id: Uuid, homepage: Option<url::Url>, description: Option<String>, app_type: Option<ApplicationsType>) -> Application {
@@ -91,11 +289,11 @@ impl Application {
         &self.rdn
     }
 
-    pub fn id(&self) -> uuid::Uuid {
+    pub fn id(&self) -> Uuid {
         self.id
     }
 
-    pub fn homepage(&self) -> Option<&url::Url> {
+    pub fn homepage(&self) -> Option<&Url> {
         self.homepage.as_ref()
     }
 
