@@ -1,7 +1,9 @@
 use std::path::{Path, PathBuf};
 #[cfg(feature = "dbus")]
 use dbus::arg::{Iter, IterAppend, TypeMismatchError};
+#[cfg(feature = "dbus")]
 use dbus::arg::ArgType;
+#[cfg(feature = "dbus")]
 use dbus::Signature;
 use serde::{Deserialize, Serialize};
 

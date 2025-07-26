@@ -1,9 +1,12 @@
 use std::marker::PhantomData;
 use std::time::Duration;
+#[cfg(feature = "dbus")]
 use arg::Variant;
 #[cfg(feature = "dbus")]
 use dbus::arg::{IterAppend, TypeMismatchError};
+#[cfg(feature = "dbus")]
 use dbus::arg::{Append, ArgType, Iter};
+#[cfg(feature = "dbus")]
 use dbus::{arg, Signature};
 #[cfg(feature = "dbus")]
 use dbus_tokio::connection::IOResourceError;
